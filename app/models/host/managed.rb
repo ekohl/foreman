@@ -84,7 +84,7 @@ class Host::Managed < Host::Base
   graphql_type '::Types::Host'
 
   class Jail < ::Safemode::Jail
-    allow :name, :diskLayout, :puppetmaster, :puppet_ca_server, :operatingsystem, :os, :environment, :ptable, :hostgroup,
+    allow :name, :diskLayout, :puppetmaster, :puppetmaster_uri, :puppet_ca_server, :puppet_ca_server_uri, :operatingsystem, :os, :environment, :ptable, :hostgroup,
       :url_for_boot, :hostgroup, :compute_resource, :domain, :ip, :ip6, :mac, :shortname, :architecture,
       :model, :certname, :capabilities, :provider, :subnet, :subnet6, :token, :location, :organization, :provision_method,
       :image_build?, :pxe_build?, :otp, :realm, :nil?, :indent, :primary_interface,

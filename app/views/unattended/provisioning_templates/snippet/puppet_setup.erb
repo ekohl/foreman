@@ -57,10 +57,12 @@ $puppet_install_args = @(
   '/norestart',
   '/i',
   "${puppet_agent_msi}",
-  <%- if @host.puppet_ca_server.strip -%>
-  "PUPPET_CA_SERVER=<%= @host.puppet_ca_server %>",
+  <%- if @host.puppet_ca_server_uri -%>
+  "PUPPET_CA_SERVER=<%= @host.puppet_ca_server_uri.host %>",
   <%- end -%>
-  "PUPPET_MASTER_SERVER=<%= @host.puppetmaster %>"
+  <%- if @host.puppetmaster_uri -%>
+  "PUPPET_MASTER_SERVER=<%= @host.puppetmaster_uri.host %>"
+  <%- end -%>
 )
 
 Write-Host "Installing ${puppet_agent_msi} with args ${puppet_install_args}"

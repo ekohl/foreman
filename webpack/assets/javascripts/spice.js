@@ -13,9 +13,8 @@ import { sprintf, translate as __ } from './react_app/common/I18n';
 let sc = null;
 
 export function startSpice() {
-  const scheme = 'ws://';
-
   const host = window.location.hostname;
+  const scheme = $('#spice-area').data('encrypt') ? 'wss' : 'ws';
   const port = $('#spice-area').data('port');
   const password = $('#spice-area').data('password');
 
@@ -25,7 +24,7 @@ export function startSpice() {
     return;
   }
 
-  const uri = `${scheme + host}:${port}`;
+  const uri = `${scheme}://${host}:${port}`;
 
   try {
     sc = new SpiceMainConn({
@@ -58,8 +57,7 @@ function spiceError(e) {
 function spiceSuccess(m) {
   $('#spice-status').text(
     sprintf(
-      __('Connected (unencrypted) to: %s'),
-      $('#spice-status').attr('data-host')
+      __('Connected to: %s'), $('#spice-status').attr('data-host')
     )
   );
   $('#spice-status').addClass('label-success');

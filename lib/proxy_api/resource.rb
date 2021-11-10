@@ -64,14 +64,14 @@ module ProxyAPI
     end
 
     # Perform GET operation on the supplied path
-    def get(path = nil, payload = {})
+    def get(path = nil, additional_headers = {})
       with_logger do
         telemetry_duration_histogram(:proxy_api_duration, :ms, method: 'get') do
           # This ensures that an extra "/" is not generated
           if path
-            resource[URI.escape(path)].get payload
+            resource[URI.escape(path)].get additional_headers
           else
-            resource.get payload
+            resource.get additional_headers
           end
         end
       end

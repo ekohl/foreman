@@ -64,12 +64,22 @@ module ProxyAPI
     end
 
     # Perform GET operation on the supplied path
-    def get(path = nil, additional_headers = {})
+    #
+    # If a query parameter is passed in, it is assumed that the path is already
+    # correctly escaped. The query is then constructed using URI.encode_www_form
+    def get(path = nil, additional_headers = {}, query: nil)
+      if query
+        raise ValueError, 'path must be specified if query is' unless path
+        path += "?#{URI.encode_www_form(query)}"
+      else
+        path = URI.escape(path)
+      end
+
       with_logger do
         telemetry_duration_histogram(:proxy_api_duration, :ms, method: 'get') do
           # This ensures that an extra "/" is not generated
           if path
-            resource[URI.escape(path)].get additional_headers
+            resource[path].get additional_headers
           else
             resource.get additional_headers
           end

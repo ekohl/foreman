@@ -17,10 +17,11 @@ module Foreman
 
     def subject
       return certificate_extract.subject if raw_cert_available?
-      dn = request.env[dn_key]
-      return unless dn && dn =~ /CN=([^\s\/,]+)/i
 
-      Regexp.last_match(1).downcase
+      dn = request.env[dn_key]
+      return unless dn
+
+      OpenSSL::X509::Name.parse(dn).to_a.detect { |oid, _, _| oid == 'CN' }&.second
     end
 
     def subject_alternative_names

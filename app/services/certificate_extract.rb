@@ -7,7 +7,7 @@ class CertificateExtract
   end
 
   def subject
-    @subject ||= @certificate.subject.to_s[/CN=([^\s\/,]+)/i, 1]
+    @subject ||= @certificate.subject.to_a.detect { |oid, _, _| oid == 'CN' }&.second
   end
 
   def subject_alternative_names

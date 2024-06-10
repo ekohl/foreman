@@ -21,6 +21,24 @@ class Api::V2::ParametersControllerTest < ActionController::TestCase
     assert_not_nil assigns(:parameters)
     parameters = ActiveSupport::JSON.decode(@response.body)
     assert_not_empty parameters
+    assert_equal parameters['total'], 1
+  end
+
+  test "should get all parameters of a specific domain" do
+    mydomain = domains(:mydomain)
+    10.times do |i|
+      FactoryBot.create(:domain_parameter, :domain => mydomain, :name => "additional_parameter_#{i}", :value => "value_#{i}")
+    end
+    with_temporary_settings(entries_per_page: 3) do
+      get :index, params: { :domain_id => mydomain.to_param, :per_page => 'all' }
+      assert_response :success
+      assert_not_nil assigns(:parameters)
+      parameters = ActiveSupport::JSON.decode(@response.body)
+      assert_not_empty parameters
+      assert_equal parameters['total'], 11
+      assert_equal parameters['results'].size, parameters['total']
+      assert_includes parameters['results'].map { |p| p['name'] }, 'additional_parameter_6'
+    end
   end
 
   test "should get index for specific hostgroup" do

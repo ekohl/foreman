@@ -398,10 +398,30 @@ class Foreman::Model::VmwareTest < ActiveSupport::TestCase
         assert_equal attrs_out, @cr.parse_args(attrs_in)
       end
 
+      test 'chooses EFI firmware with SecureBoot enabled when firmware type is uefi_secure_boot and firmware is automatic' do
+        attrs_in = HashWithIndifferentAccess.new(:firmware_type => :uefi_secure_boot, 'firmware' => 'automatic')
+        attrs_out = {:firmware => "efi", :secure_boot => true}
+        assert_equal attrs_out, @cr.parse_args(attrs_in)
+      end
+
       test 'chooses BIOS firmware when no pxe loader is set and firmware is automatic' do
         attrs_in = HashWithIndifferentAccess.new('firmware' => 'automatic')
         attrs_out = {:firmware => "bios"}
         assert_equal attrs_out, @cr.parse_args(attrs_in)
+      end
+    end
+
+    context 'virtual_tpm' do
+      test 'sets virtual_tpm to true when firmware is EFI and virtual_tpm is enabled' do
+        attrs_in = HashWithIndifferentAccess.new(:firmware => 'efi', :virtual_tpm => '1')
+        attrs_out = { :firmware => 'efi', :virtual_tpm => true }
+        assert_equal attrs_out, @cr.parse_args(attrs_in)
+      end
+
+      test 'adds error message when firmware is BIOS and virtual_tpm is enabled' do
+        args = HashWithIndifferentAccess.new(:firmware => 'bios', :virtual_tpm => '1')
+        @cr.parse_args(args)
+        assert_includes @cr.errors.full_messages, 'TPM is not compatible with BIOS firmware. Please change Firmware or disable TPM.'
       end
     end
 

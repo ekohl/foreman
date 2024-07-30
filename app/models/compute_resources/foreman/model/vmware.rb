@@ -211,6 +211,15 @@ module Foreman::Model
       }.freeze
     end
 
+    def firmware_type(obj)
+      case obj.firmware
+      when 'efi'
+        obj.secure_boot ? "uefi_secure_boot" : "efi"
+      else
+        "bios"
+      end
+    end
+
     def disk_mode_types
       {
         "persistent" => _("Persistent"),
@@ -490,14 +499,24 @@ module Foreman::Model
       args.except!(:hardware_version) if args[:hardware_version] == 'Default'
 
       firmware_type = args.delete(:firmware_type)
-      args[:firmware] = firmware_mapping(firmware_type) if args[:firmware] == 'automatic'
+      if args[:firmware] == 'automatic'
+        case firmware_type
+        when :uefi
+          args[:firmware] = 'efi'
+        when :uefi_secure_boot
+          args[:firmware] = 'efi'
+          args[:secure_boot] = true
+        else
+          args[:firmware] = 'bios'
+        end
+      end
 
-      virtual_tpm = args.delete(:virtual_tpm)
-      args[:virtual_tpm] = ActiveRecord::Type::Boolean.new.cast(virtual_tpm) unless virtual_tpm.nil?
+      if args[:virtual_tpm]
+        if args[:firmware] != 'efi'
+          errors[:virtual_tpm] << _('TPM is not compatible with BIOS firmware. Please change Firmware or disable TPM.')
+        end
 
-      if args[:firmware] == 'uefi_secure_boot'
-        args[:firmware] = 'efi'
-        args[:secure_boot] = true
+        args[:virtual_tpm] = ActiveRecord::Type::Boolean.new.cast(args[:virtual_tpm])
       end
 
       args.reject! { |k, v| v.nil? }
@@ -531,10 +550,8 @@ module Foreman::Model
         clone_vm(args)
       else
         vm = new_vm(args)
-        vm.firmware = 'bios' if vm.firmware == 'automatic'
-        if vm.firmware == 'bios' && vm.virtual_tpm
-          raise ArgumentError, _('TPM is not compatible with BIOS firmware. Please change Firmware or disable TPM.')
-        end
+        return unless errors.empty?
+
         vm.save
       end
     rescue Fog::Vsphere::Compute::NotFound => e
@@ -689,10 +706,6 @@ module Foreman::Model
       self.class.supported_display_types[display_type]
     end
 
-    def firmware(firmware, secure_boot)
-      firmware == 'efi' && secure_boot ? 'uefi_secure_boot' : firmware
-    end
-
     def self.provider_friendly_name
       "VMware"
     end
@@ -841,17 +854,6 @@ module Foreman::Model
         :firmware => 'automatic',
         :boot_order => ['network', 'disk']
       )
-    end
-
-    def firmware_mapping(firmware_type)
-      case firmware_type
-      when :uefi
-        'efi'
-      when :uefi_secure_boot
-        'uefi_secure_boot'
-      else
-        'bios'
-      end
     end
 
     def set_vm_volumes_attributes(vm, vm_attrs)

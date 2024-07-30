@@ -7,10 +7,10 @@
 </div>
 <%= text_f f, :memory_mb, :class => "col-md-2", :label => _("Memory (MB)") %>
 
-<% firmware = compute_resource.firmware(f.object.firmware, f.object.secure_boot) %>
+<% firmware_type = compute_resource.firmware_type(f.object) %>
 <%= field(f, :firmware, :label => _('Firmware'), :label_size => "col-md-2") do
   compute_resource.firmware_types.collect do |type, name|
-    radio_button_f f, :firmware, {:checked => (firmware == type), :disabled => !new_vm, :value => type, :text => _(name) }
+    radio_button_f f, :firmware, {:checked => (firmware_type == type), :disabled => !new_vm, :value => type, :text => _(name) }
   end.join(' ').html_safe
 end %>
 <%= selectable_f f, :cluster, compute_resource.clusters, { :include_blank => _('Please select a cluster') },

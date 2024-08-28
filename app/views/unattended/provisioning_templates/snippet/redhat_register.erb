@@ -73,7 +73,7 @@ description: |
 -%>
 # registration_type = '<%= registration_type %>'
 <% if registration_type == 'subscription_manager' -%>
-  <%
+<%
     if host_param('kt_activation_keys')
       subscription_manager_certpkg_url = subscription_manager_configuration_url(@host)
       subscription_manager_org = @host.rhsm_organization_label
@@ -87,34 +87,33 @@ description: |
       redhat_install_host_tools = host_param_true?('redhat_install_host_tools')
       redhat_install_host_tracer_tools = host_param_true?('redhat_install_host_tracer_tools')
     end
-  -%>
+-%>
+<%=   'echo "##############################################################"' %>
+<%=   'echo "################# SUBSCRIPTION MANAGER #######################"' %>
+<%=   'echo "##############################################################"' %>
+<%=   'echo' %>
+<%=   'echo "Starting the subscription-manager registration process"' %>
 
-  echo "##############################################################"
-  echo "################# SUBSCRIPTION MANAGER #######################"
-  echo "##############################################################"
-  echo
-  echo "Starting the subscription-manager registration process"
+<%=   '# Set up subscription-manager' %>
+<%=   snippet("subscription_manager_setup", variables: { subman_setup_scenario: 'provisioning' }).strip -%>
 
-  # Set up subscription-manager
-  <%= snippet("subscription_manager_setup", variables: { subman_setup_scenario: 'provisioning' }).strip -%>
+<%-   if (host_param('syspurpose_role') || host_param('syspurpose_usage') || host_param('syspurpose_sla') || host_param('syspurpose_addons')) -%>
+<%=     '# Avoid timeout accessing unreachable repo on air gapped infrastructure,' %>
+<%=     '#  assuming subscription-manager-syspurpose is installed in custom packages section.' %>
+<%=     'if ! rpm --query --quiet subscription-manager-syspurpose ; then' %>
+<%=     '  $PKG_MANAGER_INSTALL subscription-manager-syspurpose' %>
+<%=     'fi' %>
 
-  <%- if (host_param('syspurpose_role') || host_param('syspurpose_usage') || host_param('syspurpose_sla') || host_param('syspurpose_addons')) -%>
-    # Avoid timeout accessing unreachable repo on air gapped infrastructure,
-    #  assuming subscription-manager-syspurpose is installed in custom packages section.
-    if ! rpm --query --quiet subscription-manager-syspurpose ; then
-      $PKG_MANAGER_INSTALL subscription-manager-syspurpose
-    fi
-
-    if [ -f /usr/sbin/syspurpose ]; then
-      <%- if host_param('syspurpose_role') -%>
-        syspurpose set-role "<%= host_param('syspurpose_role') %>"
-      <%- end -%>
-      <%- if host_param('syspurpose_usage') -%>
-        syspurpose set-usage "<%= host_param('syspurpose_usage') %>"
-      <%- end -%>
-      <%- if host_param('syspurpose_sla') -%>
-        syspurpose set-sla "<%= host_param('syspurpose_sla') %>"
-      <%- end -%>
+<%=     'if [ -f /usr/sbin/syspurpose ]; then' %>
+<%-     if host_param('syspurpose_role') -%>
+<%=       "syspurpose set-role '#{host_param('syspurpose_role')}'" %>
+<%-     end -%>
+<%-     if host_param('syspurpose_usage') -%>
+<%=       "syspurpose set-usage '#{host_param('syspurpose_usage')}'" %>
+<%-     end -%>
+<%-     if host_param('syspurpose_sla') -%>
+<%=       "syspurpose set-sla '#{host_param('syspurpose_sla')}'" %>
+<%-     end -%>
       <%- if host_param('syspurpose_addons') -%>
         <%- addons = host_param('syspurpose_addons').split(',')
               .map { |add_on| "'#{add_on.strip}'" }.join(" ") %>

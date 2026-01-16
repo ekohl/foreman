@@ -14,7 +14,7 @@ model: ReportTemplate
 require:
 - plugin: katello
   version: 4.7.0
-%>
+-%>
 <%  load_hosts(search: input('Hosts filter')).each_record do |host| -%>
 <%    host.installed_packages.each do |pkg| -%>
 <%-   report_row(
